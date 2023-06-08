@@ -96,12 +96,6 @@ public class TreeRender {
 		}
 	}
 
-	private static List<Number> convertMapToList(Map<Integer, List<Number>> layersOfNumbersMap) {
-
-		return layersOfNumbersMap.values().stream().flatMap(List::stream).sorted(new Number.PositionComparator())
-			.collect(Collectors.toList());
-	}
-
 	private static String buildTree(Map<Integer, List<Number>> layersOfNumbersMap) {
 
 		StringBuilder sb = new StringBuilder();
@@ -136,6 +130,12 @@ public class TreeRender {
 		}
 
 		return sb.substring(1).toString();
+	}
+	
+	private static List<Number> convertMapToList(Map<Integer, List<Number>> layersOfNumbersMap) {
+
+		return layersOfNumbersMap.values().stream().flatMap(List::stream).sorted(new Number.PositionComparator())
+			.collect(Collectors.toList());
 	}
 
 	private static int setIndentation(List<Number> list, int currentIndentation, int index) {
@@ -180,34 +180,36 @@ public class TreeRender {
 	private static int parseNumbersRecursive(String input, int startIndex, int layer, List<Number> numbers,
 		StringBuilder sb) {
 
-		int move = 0;
+		int performedMoves = 0;
+		int numberOfSkippedIndexes = 0;
 
 		for (int i = startIndex; i < input.length(); i++) {
 
 			char character = input.charAt(i);
+			
 			// DIGIT
 			if (Character.isDigit(character)) {
-				move++;
+				performedMoves++;
 				sb.append(character);
 			}
 			// OPEN
 			if (character == '(') {
-				move++;
-				int numberOfSkippedIndexes = parseNumbersRecursive(input, i + 1, layer + 1, numbers, sb);
+				performedMoves++;
+				numberOfSkippedIndexes = parseNumbersRecursive(input, i + 1, layer + 1, numbers, sb);
 				i += numberOfSkippedIndexes;
-				move += numberOfSkippedIndexes;
+				performedMoves += numberOfSkippedIndexes;
 			}
 			// CLOSE
 			if (character == ')') {
-				move++;
+				performedMoves++;
 				if (sb.length() != 0) {
 					addNumber(layer, numbers, sb);
 				}
-				return move;
+				return performedMoves;
 			}
 			// WHITESPACE
 			if (character == ' ') {
-				move++;
+				performedMoves++;
 				if (sb.length() != 0) {
 					addNumber(layer, numbers, sb);
 				}
