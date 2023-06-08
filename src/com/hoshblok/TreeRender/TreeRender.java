@@ -1,4 +1,4 @@
-package com.hoshblok.treerender;
+package com.hoshblok.TreeRender;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class TreeRender {
 
-	private static int position = 1;
+	private static int numberPosition = 1;
 	private static String inputFileName;
 	private static String outputFileName;
 	private static Map<Integer, List<Number>> layersOfNumbersMap = new HashMap<>();
@@ -26,7 +26,7 @@ public class TreeRender {
 		try {
 			inputFileName = args[0];
 			outputFileName = args[1];
-			
+
 		} catch (IndexOutOfBoundsException e) {
 			System.out.println("Specify 2 launch parameters (file names)!");
 			return;
@@ -56,9 +56,9 @@ public class TreeRender {
 		StringBuilder sb = new StringBuilder();
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-			
+
 			String line;
-			
+
 			while ((line = reader.readLine()) != null) {
 				sb.append(line);
 			}
@@ -76,9 +76,9 @@ public class TreeRender {
 	private static void fillMap(Map<Integer, List<Number>> layersOfNumbersMap, List<Number> numberList) {
 
 		for (Number number : numberList) {
-			
+
 			int layerNumber = number.getLayer();
-			
+
 			if (layersOfNumbersMap.get(layerNumber) == null) {
 				layersOfNumbersMap.put(layerNumber, new ArrayList<>());
 			}
@@ -89,9 +89,9 @@ public class TreeRender {
 	private static void fillSpaceParameter(Map<Integer, List<Number>> layersOfNumbersMap) {
 
 		for (List<Number> list : layersOfNumbersMap.values()) {
-			
+
 			Number maxNumber = list.stream().max(new Number.ValueComparator()).get();
-			
+
 			list.stream().forEach(n -> n.setSpace(maxNumber.getValue().toString().length() - 1));
 		}
 	}
@@ -106,17 +106,17 @@ public class TreeRender {
 
 		StringBuilder sb = new StringBuilder();
 		List<Number> checkList = convertMapToList(layersOfNumbersMap);
-		List<Number> list = List.copyOf(checkList);
+		List<Number> listOfNumbersByPostions = List.copyOf(checkList);
 
 		int currentIndentation = 0;
 
-		for (int i = 0; i < list.size(); i++) {
+		for (int i = 0; i < listOfNumbersByPostions.size(); i++) {
 
 			sb.append("\n");
 
-			for (int j = 1; j < list.get(i).layer; j++) {
+			for (int j = 1; j < listOfNumbersByPostions.get(i).layer; j++) {
 
-				setIndentation(list, currentIndentation, j);
+				currentIndentation = setIndentation(listOfNumbersByPostions, currentIndentation, j);
 
 				if (i == 0) {
 					break;
@@ -124,10 +124,10 @@ public class TreeRender {
 				appendIndentations(checkList, j, sb, currentIndentation);
 			}
 
-			sb.append(list.get(i).value);
+			sb.append(listOfNumbersByPostions.get(i).value);
 
 			try {
-				appendMinusPlus(list, i, sb);
+				appendMinusPlus(listOfNumbersByPostions, i, sb);
 			} catch (IndexOutOfBoundsException e) {
 				continue;
 			}
@@ -138,10 +138,12 @@ public class TreeRender {
 		return sb.substring(1).toString();
 	}
 
-	private static void setIndentation(List<Number> list, int currentIndentation, int index) {
+	private static int setIndentation(List<Number> list, int currentIndentation, int index) {
+
 		try {
-			currentIndentation = list.stream().filter(number -> number.layer == index).findAny().get().space;
+			return currentIndentation = list.stream().filter(number -> number.layer == index).findAny().get().space;
 		} catch (NoSuchElementException e) {
+			return 0;
 		}
 	}
 
@@ -183,19 +185,19 @@ public class TreeRender {
 		for (int i = startIndex; i < input.length(); i++) {
 
 			char character = input.charAt(i);
-			//DIGIT
+			// DIGIT
 			if (Character.isDigit(character)) {
 				move++;
 				sb.append(character);
 			}
-			//OPEN
+			// OPEN
 			if (character == '(') {
 				move++;
 				int numberOfSkippedIndexes = parseNumbersRecursive(input, i + 1, layer + 1, numbers, sb);
 				i += numberOfSkippedIndexes;
 				move += numberOfSkippedIndexes;
 			}
-			//CLOSE
+			// CLOSE
 			if (character == ')') {
 				move++;
 				if (sb.length() != 0) {
@@ -203,7 +205,7 @@ public class TreeRender {
 				}
 				return move;
 			}
-			//WHITESPACE
+			// WHITESPACE
 			if (character == ' ') {
 				move++;
 				if (sb.length() != 0) {
@@ -216,13 +218,11 @@ public class TreeRender {
 
 	private static void addNumber(int layer, List<Number> numbers, StringBuilder sb) {
 
-		numbers.add(new Number(Integer.valueOf(sb.toString()), layer, position));
-		position++;
+		numbers.add(new Number(Integer.valueOf(sb.toString()), layer, numberPosition));
+		numberPosition++;
 		sb.delete(0, sb.length());
 	}
-	
 
-	
 	// CLASS
 	private static class Number {
 
@@ -249,9 +249,7 @@ public class TreeRender {
 			this.space = space;
 		}
 
-		
-		
-		//COMPORATORS
+		// COMPORATORS
 		private static class ValueComparator implements Comparator<Number> {
 
 			@Override
